@@ -20079,3 +20079,25 @@ venv/lib/python3.10/site-packages/pip-22.0.2.dist-info/top_level.txt
 venv/lib/python3.10/site-packages/pip-22.0.2.dist-info/WHEEL
 backend/temp_projects/
 venv/
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.so
+
+# Entornos virtuales
+venv/
+env/
+.venv/
+
+# Archivos de logs
+*.log
+
+# Archivos de compilación
+*.out
+*.o
+
+# Archivos temporales
+*.tmp
+*.swp
+*.swo
