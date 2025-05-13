@@ -1,0 +1,26 @@
+The following values were not passed to `accelerate launch` and had defaults used instead:
+	`--num_processes` was set to a value of `1`
+	`--num_machines` was set to a value of `1`
+	`--mixed_precision` was set to a value of `'no'`
+	`--dynamo_backend` was set to a value of `'no'`
+To avoid this warning pass in values for each of the problematic parameters or run `accelerate config`.
+🔁 Cargando tokenizer...
+🧠 Cargando modelo base en 4-bit...
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:35<00:35, 35.84s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:07<00:00, 33.60s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:07<00:00, 33.91s/it]
+🎛️ Preparando modelo...
+Traceback (most recent call last):
+  File "/home/cesar/sistemas/cotyboost4/backend/train_qlora.py", line 37, in <module>
+    model = prepare_model_for_kbit_training(model)
+  File "/home/cesar/sistemas/cotyboost4/venv/lib/python3.10/site-packages/peft/utils/other.py", line 141, in prepare_model_for_kbit_training
+    param.data = param.data.to(torch.float32)
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 502.00 MiB. GPU 0 has a total capacity of 9.65 GiB of which 326.56 MiB is free. Process 134600 has 4.27 GiB memory in use. Including non-PyTorch memory, this process has 4.39 GiB memory in use. Of the allocated memory 3.60 GiB is allocated by PyTorch, and 556.49 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+Traceback (most recent call last):
+  File "/home/cesar/sistemas/cotyboost4/venv/bin/accelerate", line 8, in <module>
+    sys.exit(main())
+  File "/home/cesar/sistemas/cotyboost4/venv/lib/python3.10/site-packages/accelerate/commands/accelerate_cli.py", line 50, in main
+    args.func(args)
+  File "/home/cesar/sistemas/cotyboost4/venv/lib/python3.10/site-packages/accelerate/commands/launch.py", line 1213, in launch_command
+    simple_launcher(args)
+  File "/home/cesar/sistemas/cotyboost4/venv/lib/python3.10/site-packages/accelerate/commands/launch.py", line 795, in simple_launcher
+    raise subprocess.CalledProcessError(returncode=process.returncode, cmd=cmd)
+subprocess.CalledProcessError: Command '['/home/cesar/sistemas/cotyboost4/venv/bin/python3', 'train_qlora.py', '--model_name', 'codellama/CodeLlama-7b-hf', '--mode', 'qlora', '--dataset_path', 'temp_projects/fcdcc3fb/dataset.json', '--output_dir', 'temp_projects/fcdcc3fb/adapter']' returned non-zero exit status 1.
