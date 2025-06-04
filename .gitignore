@@ -1,1 +1,19 @@
+# Python cache and bytecode
+# Virtual environments
+/venv/
+/env/
+/.venv/
+# Logs and temporary files
+*.tmp
+
+# Node dependencies
+node_modules/
+
+# Temporary project artifacts
+backend/temp_projects/
+
+# OS files
+.DS_Store
+=======
 *.pyc
+
