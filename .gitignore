@@ -14,3 +14,6 @@ backend/temp_projects/
 
 # OS files
 .DS_Store
+=======
+*.pyc
+
