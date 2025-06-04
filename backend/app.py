@@ -6,6 +6,7 @@ from routes.metrics import metrics_bp
 from routes.logs import logs_bp
 import subprocess
 import os
+import signal
 
 app = Flask(__name__)
 CORS(app)
