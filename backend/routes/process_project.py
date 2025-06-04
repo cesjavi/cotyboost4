@@ -1,5 +1,7 @@
 from flask import Blueprint, request, jsonify, send_file
 import os, uuid, zipfile, shutil
+import subprocess
+import re
 from utils.analyzer import analyze_project
 import json
 import glob
@@ -27,7 +29,12 @@ def process_project():
         # GitHub URL
         elif request.json and 'github_url' in request.json:
             github_url = request.json['github_url']
-            os.system(f"git clone {github_url} {extract_path}")
+            # Validate GitHub HTTPS URL before cloning
+            pattern = re.compile(r"^https://github\.com/[^/]+/[^/]+(\.git)?$")
+            if not pattern.match(github_url):
+                return jsonify({"error": "Invalid GitHub URL"}), 400
+
+            subprocess.run(["git", "clone", github_url, extract_path], check=True)
             project_name = github_url.strip('/').split('/')[-1].replace(" ", "_")
         else:
             return jsonify({"error": "No se recibió ZIP ni GitHub URL"}), 400
