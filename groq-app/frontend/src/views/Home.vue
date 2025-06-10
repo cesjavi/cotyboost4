@@ -52,7 +52,7 @@ async function send() {
 async function processProject() {
   loading.value = true
   analysis.value = null
-  const res = await fetch('/process_project/', {
+  const res = await fetch('/api/process_project/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ github_url: githubUrl.value })
@@ -63,7 +63,7 @@ async function processProject() {
 
 function downloadDataset() {
   if (analysis.value?.project_id) {
-    window.location.href = `/download_dataset/${analysis.value.project_id}`
+    window.location.href = `/api/download_dataset/${analysis.value.project_id}`
   }
 }
 </script>
