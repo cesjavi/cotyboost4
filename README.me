@@ -23,6 +23,7 @@ cotyboost_project_export/
 │       ├── main.js
 │       └── components/
 │           └── MainPage.vue  # UI completa con subida, análisis, entrenamiento, inferencia
+├── examples/                # Scripts y proyectos de referencia
 ```
 
 ---
@@ -70,6 +71,18 @@ Abrir `http://localhost:5173` en el navegador.
 - Node.js ≥ 18
 - `nvm`, `git`, `CUDA` (para GPU)
 - 20+ GB libres en disco para modelos grandes
+
+## 📝 Ejemplos
+
+Dentro del directorio `examples/` se encuentran scripts y proyectos de
+referencia:
+
+- `test_1.py` y `testcode.py` muestran cómo cargar un modelo y realizar
+  inferencias rápidas.
+- `train.sh` y `train2.sh` contienen comandos listos para entrenar un
+  adaptador LoRA/QLoRA con `accelerate`.
+- `groq-app/` es una pequeña aplicación Flask + Vue que se conecta a la
+  API de Groq.
 
 ---
 
