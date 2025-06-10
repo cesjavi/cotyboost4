@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
 from groq_api import send_prompt
 from analyzer import analyze_project
 import os
@@ -10,6 +11,7 @@ import json
 import glob
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
