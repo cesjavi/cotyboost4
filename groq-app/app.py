@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from groq_api import send_prompt
+from backend.groq_api import send_prompt
 
 app = Flask(__name__)
 
