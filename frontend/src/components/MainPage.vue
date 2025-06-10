@@ -166,11 +166,20 @@ export default {
   };
 }
 ,
-    stopTraining() {
-      if (this.eventSource) {
-        this.eventSource.close();
+    async stopTraining() {
+      if (!this.analysis?.project_id) return;
+      try {
+        await axios.post('http://localhost:5000/stop_train', {
+          project_id: this.analysis.project_id
+        });
+        if (this.eventSource) {
+          this.eventSource.close();
+        }
+        this.isTraining = false;
+      } catch (err) {
+        console.error('Error al detener el entrenamiento:', err);
+        this.error = err.response?.data?.error || err.message;
       }
-      this.isTraining = false;
     },
     downloadAdapter() {
       window.location.href = `http://localhost:5000/download_adapter/${this.analysis.project_id}`;
