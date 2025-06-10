@@ -1,6 +1,9 @@
+import os
 import requests
 
-GROQ_API_KEY = "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"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise EnvironmentError("GROQ_API_KEY environment variable not set")
 GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
 
 def send_prompt(prompt):

@@ -33,14 +33,14 @@ groq_app/
 ## 🚀 Instrucciones de uso
 
 ### 1. Clave de API Groq
-Registrate en [https://console.groq.com](https://console.groq.com)  
-Obtené tu clave de API y reemplazá `"TU_CLAVE"` en `backend/groq_api.py`:
+Registrate en [https://console.groq.com](https://console.groq.com)
+y exportá la variable de entorno `GROQ_API_KEY` con tu clave:
 
-```python
-GROQ_API_KEY = "TU_CLAVE"
-```
 
-### 2. Backend (Python + Flask)
+```bash
+export GROQ_API_KEY="TU_CLAVE"
+2. Backend (Python + Flask)
+
 
 cd backend
 python -m venv venv
