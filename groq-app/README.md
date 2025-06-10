@@ -27,9 +27,6 @@ groq_app/
 ├── start.sh
 └── README.md
 
-yaml
-Copiar
-Editar
 
 ---
 
@@ -41,7 +38,9 @@ Obtené tu clave de API y reemplazá `"TU_CLAVE"` en `backend/groq_api.py`:
 
 ```python
 GROQ_API_KEY = "TU_CLAVE"
-2. Backend (Python + Flask)
+```
+
+### 2. Backend (Python + Flask)
 
 cd backend
 python -m venv venv
