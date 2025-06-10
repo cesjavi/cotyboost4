@@ -143,7 +143,17 @@ export default {
         setTimeout(this.checkAdapterExists, 10000);
       }
     },
-    
+
+    async fetchMetrics() {
+      if (!this.analysis?.project_id) return;
+      try {
+        const response = await axios.get(`http://localhost:5000/train_metrics/${this.analysis.project_id}`);
+        this.metrics = response.data;
+      } catch (e) {
+        console.error('Error fetching metrics:', e);
+      }
+    },
+
     async startTraining() {
   if (!this.analysis?.project_id) return;
   this.isTraining = true;
@@ -164,6 +174,10 @@ export default {
     console.error("Error en el stream:", err);
     eventSource.close();
   };
+
+  if (this.metricsInterval) clearInterval(this.metricsInterval);
+  this.fetchMetrics();
+  this.metricsInterval = setInterval(this.fetchMetrics, 5000);
 }
 ,
     async stopTraining() {
@@ -180,13 +194,21 @@ export default {
         console.error('Error al detener el entrenamiento:', err);
         this.error = err.response?.data?.error || err.message;
       }
+      if (this.metricsInterval) {
+        clearInterval(this.metricsInterval);
+        this.metricsInterval = null;
+      }
+      this.isTraining = false;
     },
     downloadAdapter() {
       window.location.href = `http://localhost:5000/download_adapter/${this.analysis.project_id}`;
     }
   },
   beforeUnmount() {
-    if (this.metricsInterval) clearInterval(this.metricsInterval);
+    if (this.metricsInterval) {
+      clearInterval(this.metricsInterval);
+      this.metricsInterval = null;
+    }
     if (this.eventSource) this.eventSource.close();
   }
 };

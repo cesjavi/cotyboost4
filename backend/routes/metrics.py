@@ -8,25 +8,17 @@ metrics_bp = Blueprint('metrics', __name__)
 
 @metrics_bp.route("/train_metrics/<project_id>", methods=["GET"])
 def get_metrics(project_id):
-    # Leer nombre del proyecto desde archivo de análisis generado
-    metadata_path = f"temp_projects/{project_id}/analysis.json"
-    if os.path.exists(metadata_path):
-        with open(metadata_path, "r") as f:
-            data = json.load(f)
-            project_name = data.get("project_name", "project")
-    else:
-        project_name = "project"
-
-    full_id = f"{project_id}_{project_name}"
+    """Return training metrics for a given project."""
     metrics = {
-        "loss": get_loss_from_log(full_id),
+        "loss": get_loss_from_log(project_id),
         "vram": get_gpu_memory_used(),
         "gpu_load": get_gpu_utilization()
     }
     return jsonify(metrics)
 
-def get_loss_from_log(project_dir):
-    log_path = f"temp_projects/{project_dir}/train.log"
+def get_loss_from_log(project_id):
+    """Read the latest loss value from ``temp_projects/<project_id>/train.log``."""
+    log_path = f"temp_projects/{project_id}/train.log"
     if not os.path.exists(log_path):
         return None
     loss = None
