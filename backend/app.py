@@ -32,7 +32,13 @@ def train_stream(project_id):
     ]
 
     # Lanzar el proceso en segundo plano
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+        start_new_session=True,
+    )
     training_processes[project_id] = process
 
     def generate():
