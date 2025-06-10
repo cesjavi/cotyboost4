@@ -56,19 +56,6 @@ def stop_train():
     else:
         return jsonify({"error": "No se encontró un proceso en ejecución para este proyecto."}), 404
 
-from flask import send_from_directory
-import os
-
-@app.route('/download_adapter/<project_id>', methods=['HEAD', 'GET'])
-def download_adapter(project_id):
-    adapter_path = f"temp_projects/{project_id}/adapters"
-    
-    # Verificamos si el adaptador existe en la carpeta correcta
-    if os.path.exists(adapter_path):
-        # Flask intentará servir el archivo directamente
-        return send_from_directory(adapter_path, "adapter_model.safetensors", as_attachment=True)
-    else:
-        return jsonify({"error": "Adaptador no encontrado"}), 404
 
 
 if __name__ == '__main__':
