@@ -7,7 +7,7 @@ Plataforma para analizar proyectos de código, generar datasets y entrenar model
 ## 📁 Estructura
 
 ```
-cotyboost_project_export/
+cotyboost/
 ├── backend/
 │   ├── app.py
 │   ├── routes/
@@ -32,7 +32,7 @@ cotyboost_project_export/
 ### 🔧 Backend (Flask + Transformers)
 
 ```bash
-cd backend
+cd cotyboost/backend
 python3 -m venv ../venv
 source ../venv/bin/activate
 pip install flask flask-cors transformers peft datasets accelerate bitsandbytes
@@ -44,7 +44,7 @@ python app.py
 ### 🖥️ Frontend (Vue 3 + Vite)
 
 ```bash
-cd frontend
+cd cotyboost/frontend
 npm install
 npm run dev
 ```
