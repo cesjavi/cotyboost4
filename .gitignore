@@ -11,11 +11,13 @@ node_modules/
 
 # Temporary project artifacts
 backend/temp_projects/
+cotyboost/backend/temp_projects/
 
 # OS files
 .DS_Store
 *.pyc
 groq-app/backend/venv/
+cotyboost/backend/venvcb/
 
 backend/venvcb/pyvenv.cfg
 backend/venvcb/Lib/site-packages/pip/__init__.py
