@@ -132,5 +132,87 @@ def download_log(project_id):
     else:
         return jsonify({'error': 'Log de entrenamiento no encontrado.'}), 404
 
+
+@app.route('/complete_dataset/<project_id>', methods=['POST'])
+def complete_dataset(project_id):
+    folder_path = os.path.join('temp_projects', project_id)
+    dataset_path = os.path.join(folder_path, 'dataset.json')
+
+    if not os.path.exists(dataset_path):
+        return jsonify({'error': 'Dataset no encontrado.'}), 404
+
+    with open(dataset_path, 'r', encoding='utf-8') as f:
+        dataset = json.load(f)
+
+    completados = 0
+    for item in dataset:
+        if not item.get("output"):
+            prompt = f"{item['instruction']}\n\n{item['input']}"
+            response = send_prompt(prompt)
+            item["output"] = response["choices"][0]["message"]["content"]
+            completados += 1
+
+    with open(dataset_path, 'w', encoding='utf-8') as f:
+        json.dump(dataset, f, indent=2, ensure_ascii=False)
+
+    return jsonify({"status": "ok", "completados": completados})
+
+@app.route('/auto_train/<project_id>', methods=['POST'])
+def auto_train(project_id):
+    folder_path = os.path.join('temp_projects', project_id)
+    dataset_path = os.path.join(folder_path, 'dataset.json')
+
+    if not os.path.exists(dataset_path):
+        return jsonify({'error': 'Dataset no encontrado.'}), 404
+
+    # 1. Cargar y completar dataset con Groq
+    with open(dataset_path, 'r', encoding='utf-8') as f:
+        dataset = json.load(f)
+
+    completados = 0
+    for item in dataset:
+        if not item.get("output"):
+            prompt = f"{item['instruction']}\n\n{item['input']}"
+            response = send_prompt(prompt)
+            item["output"] = response["choices"][0]["message"]["content"]
+            completados += 1
+
+    with open(dataset_path, 'w', encoding='utf-8') as f:
+        json.dump(dataset, f, indent=2, ensure_ascii=False)
+
+    # 2. Ejecutar entrenamiento vía train_controller.py (como subprocess)
+    mode = request.json.get("mode", "lora")
+    model_name = request.json.get("model_name", "codellama/CodeLlama-7b-hf")
+
+    log_path = os.path.join(folder_path, "train.log")
+    command = [
+        "accelerate", "launch", "utils/lora_trainer.py",
+        "--model_name", model_name,
+        "--mode", mode,
+        "--dataset_path", dataset_path,
+        "--output_dir", os.path.join(folder_path, "adapter")
+    ]
+
+    with open(log_path, "w") as log:
+        subprocess.Popen(command, stdout=log, stderr=log)
+
+    return jsonify({
+        "status": "ok",
+        "completados": completados,
+        "message": f"Entrenamiento iniciado con modelo {model_name} en modo {mode}"
+    })
+
+@app.route('/api/log/<project_id>', methods=['GET'])
+def get_log(project_id):
+    log_path = os.path.join('temp_projects', project_id, 'train.log')
+    if not os.path.exists(log_path):
+        return jsonify({"log": "⏳ Entrenamiento aún no comenzó..."})
+    try:
+        with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
+            contenido = f.read()[-5000:]  # lee los últimos 5000 caracteres
+        return jsonify({"log": contenido})
+    except Exception as e:
+        return jsonify({"log": f"⚠️ Error leyendo log: {str(e)}"})
+
 if __name__ == "__main__":
     app.run(debug=True)

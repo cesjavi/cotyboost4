@@ -8,3 +8,4 @@ def chat():
     prompt = request.json.get("prompt", "")
     response = send_prompt(prompt)
     return jsonify(response)
+

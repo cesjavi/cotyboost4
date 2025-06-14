@@ -8,7 +8,8 @@ def analyze_project(project_path):
     for root, _, files in os.walk(project_path):
         for file in files:
             if file.endswith((
-                '.py', '.js', '.ts', '.cpp', '.c', '.java', '.cs', '.go'
+                '.py', '.js', '.ts', '.cpp', '.c', '.java', '.cs', '.go', '.cs', '.php', '.rb', '.swift', '.rs', '.html', '.css', '.json', '.yaml', '.yml', '.xml', '.md', '.txt',
+                '.sh', '.bash', '.zsh', '.sql', '.pl', '.lua', '.kt', '.dart', '.scala', '.groovy', '.clj', '.clojure', '.hs', '.r', '.m', '.swift'
             )):
                 file_count += 1
                 file_path = os.path.join(root, file)
@@ -18,7 +19,7 @@ def analyze_project(project_path):
                         total_lines += len(lines)
                 except Exception:
                     pass
-                total_size_mb += os.path.getsize(file_path) / (1024 * 1024)
+                total_size_mb += os.path.getsize(file_path) / (2048 * 2048)
 
     recommendation = 'qlora' if total_lines > 10000 or total_size_mb > 50 else 'lora'
     model = 'codellama/CodeLlama-7b-hf' if recommendation == 'qlora' else 'Salesforce/codegen-2B-mono'
