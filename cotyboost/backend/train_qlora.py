@@ -86,7 +86,9 @@ training_args = TrainingArguments(
     num_train_epochs=1,
     logging_steps=10,
     save_strategy="no",
-    report_to="none"
+    report_to="all",
+    logging_dir='./training_logs',
+    logging_strategy='steps'
 )
 
 trainer = Trainer(

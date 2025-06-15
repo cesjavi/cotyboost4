@@ -1,6 +1,7 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response, stream_with_context
 import subprocess
 import os
+import time
 
 train_bp = Blueprint('train', __name__)
 
@@ -31,3 +32,29 @@ def launch_training():
         subprocess.Popen(command, stdout=log, stderr=log)
 
     return jsonify({"status": "Training started", "log_file": log_file})
+
+@train_bp.route('/train_stream/<project_id>')
+def train_stream_route(project_id):
+    log_file_path = f"temp_projects/{project_id}/train.log"
+
+    def generate_log_updates(log_file_path):
+        try:
+            with open(log_file_path, 'r') as f:
+                # Move to the end of the file
+                f.seek(0, os.SEEK_END)
+                while True:
+                    line = f.readline()
+                    if not line:
+                        time.sleep(0.5)  # Wait for new lines
+                        # Optional: Add a condition to stop if the training is done
+                        # For example, check for a specific message or if the file hasn't changed
+                        continue
+                    yield f"data: {line}\n\n"
+        except FileNotFoundError:
+            yield f"data: Error: Log file not found at {log_file_path}\n\n"
+            return
+        except Exception as e:
+            yield f"data: Error reading log file: {str(e)}\n\n"
+            return
+
+    return Response(stream_with_context(generate_log_updates(log_file_path)), mimetype='text/event-stream')
