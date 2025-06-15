@@ -21,7 +21,6 @@
       <pre>{{ JSON.stringify(analysis.dataset_preview, null, 2) }}</pre>
       <pre>{{ analysis.log_preview }}</pre>
       <button @click="downloadDataset">Descargar dataset</button>
-      <button @click="downloadLog">Descargar log</button>
     </section>
 
     <section class="chat">
@@ -66,12 +65,6 @@ async function processProject() {
 function downloadDataset() {
   if (analysis.value?.project_id) {
     window.location.href = `/api/download_dataset/${analysis.value.project_id}`
-  }
-}
-
-function downloadLog() {
-  if (analysis.value?.project_id) {
-    window.location.href = `/api/download_log/${analysis.value.project_id}`
   }
 }
 </script>
