@@ -173,31 +173,55 @@ export default {
     },
 
     async startTraining() {
-  if (!this.analysis?.project_id) return;
-  this.isTraining = true;
-  this.trainingLog = "";
+      if (!this.analysis?.project_id) return;
+      this.trainingLog = "";
+      this.error = null; // Clear previous errors
 
-  const eventSource = new EventSource(`http://localhost:5000/train_stream/${this.analysis.project_id}?model_name=${this.analysis.suggested_model}&mode=${this.analysis.recommendation.toLowerCase()}`);
-  this.eventSource = eventSource;
+      try {
+        // Make the POST request to /train
+        await axios.post('http://localhost:5000/train', {
+          project_id: this.analysis.project_id,
+          model_name: this.analysis.suggested_model,
+          mode: this.analysis.recommendation.toLowerCase()
+        });
 
-  eventSource.onmessage = (event) => {
-    this.trainingLog += event.data + "\n";
-    this.$nextTick(() => {
-      const logBox = document.querySelector(".log-box");
-      logBox.scrollTop = logBox.scrollHeight;
-    });
-  };
+        // If the request is successful, set isTraining to true and initialize EventSource
+        this.isTraining = true;
 
-  eventSource.onerror = (err) => {
-    console.error("Error en el stream:", err);
-    eventSource.close();
-  };
+        const eventSource = new EventSource(`http://localhost:5000/train_stream/${this.analysis.project_id}?model_name=${this.analysis.suggested_model}&mode=${this.analysis.recommendation.toLowerCase()}`);
+        this.eventSource = eventSource;
 
-  if (this.metricsInterval) clearInterval(this.metricsInterval);
-  this.fetchMetrics();
-  this.metricsInterval = setInterval(this.fetchMetrics, 5000);
-}
-,
+        eventSource.onmessage = (event) => {
+          this.trainingLog += event.data + "\n";
+          this.$nextTick(() => {
+            const logBox = document.querySelector(".log-box");
+            if (logBox) { // Ensure logBox exists
+              logBox.scrollTop = logBox.scrollHeight;
+            }
+          });
+        };
+
+        eventSource.onerror = (err) => {
+          console.error("Error en el stream:", err);
+          this.error = "Error en la conexión de logs. El entrenamiento podría continuar en backend.";
+          // Consider setting isTraining to false if the error indicates a total failure
+          // For now, we'll keep it true as the training might be running in the backend
+          // but if it's a persistent error, the user might need to stop it.
+          // A more robust solution would be to check the type of error.
+          // this.isTraining = false; // Uncomment if SSE failure should stop showing "training"
+          eventSource.close();
+        };
+
+        if (this.metricsInterval) clearInterval(this.metricsInterval);
+        this.fetchMetrics(); // Fetch initial metrics
+        this.metricsInterval = setInterval(this.fetchMetrics, 5000);
+
+      } catch (err) {
+        console.error('Error al iniciar el entrenamiento:', err);
+        this.error = `Error al iniciar el entrenamiento: ${err.response?.data?.error || err.message}`;
+        this.isTraining = false; // Ensure isTraining is false if the /train call fails
+      }
+    },
     async stopTraining() {
       if (!this.analysis?.project_id) return;
       try {
