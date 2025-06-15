@@ -42,6 +42,7 @@ def train_stream(project_id):
         text=True,
         bufsize=1,
         start_new_session=True,
+        env={**os.environ, "PYTHONUNBUFFERED": "1"},
     )
     training_processes[project_id] = process
 
