@@ -154,6 +154,24 @@ export default {
       }
     },
 
+    copyCommand() {
+      if (!this.trainingCommand) return;
+      navigator.clipboard.writeText(this.trainingCommand);
+    },
+
+    downloadCommand() {
+      if (!this.trainingCommand) return;
+      const blob = new Blob([this.trainingCommand], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'train.sh';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+
     async startTraining() {
   if (!this.analysis?.project_id) return;
   this.isTraining = true;
