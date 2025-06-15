@@ -17,6 +17,7 @@ cotyboost/backend/temp_projects/
 .DS_Store
 *.pyc
 groq-app/backend/venv/
+groq-app/backend/temp_projects/
 cotyboost/backend/venvcb/
 
 backend/venvcb/pyvenv.cfg
@@ -584,3 +585,5 @@ groq-app/backend/temp_projects/7522e829
 groq-app/backend/temp_projects/6451994b
 groq-app/backend/temp_projects/86640318
 groq-app/backend/temp_projects/ba484891
+groq-app/backend/temp_projects/41fb4257
+groq-app/backend/temp_projects/fb55434a
