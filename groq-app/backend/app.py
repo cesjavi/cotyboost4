@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from groq_api import send_prompt
 from analyzer import analyze_project
+from datetime import datetime
 import os
 import uuid
 import zipfile
@@ -206,7 +207,6 @@ def auto_train(project_id):
         "message": f"Entrenamiento iniciado con modelo {model_name} en modo {mode}"
     })
 
-from datetime import datetime  # <-- asegurate de importar esto arriba
 
 @app.route('/api/log/<project_id>', methods=['GET'])
 def get_log(project_id):
