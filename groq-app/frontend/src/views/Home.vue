@@ -21,6 +21,27 @@
       <pre>{{ JSON.stringify(analysis.dataset_preview, null, 2) }}</pre>
       <pre>{{ analysis.log_preview }}</pre>
       <button @click="downloadDataset">Descargar dataset</button>
+      <div class="train-block">
+        <label>
+          Modelo:
+          <select v-model="modelName">
+            <option value="codellama/CodeLlama-7b-hf">codellama/CodeLlama-7b-hf</option>
+            <option value="TinyLlama/TinyLlama-1.1B-Chat-v1.0">TinyLlama/TinyLlama-1.1B-Chat-v1.0</option>
+          </select>
+        </label>
+        <label>
+          Modo:
+          <select v-model="mode">
+            <option value="lora">lora</option>
+            <option value="full">full</option>
+          </select>
+        </label>
+        <button @click="completeDataset" :disabled="loading || training">Completar dataset</button>
+        <button @click="startTraining" :disabled="loading || training">Entrenar</button>
+        <button @click="downloadAdapter" :disabled="loading || training">Descargar adapter</button>
+        <button @click="downloadLog" :disabled="loading || training">Descargar log</button>
+        <pre>{{ liveLog }}</pre>
+      </div>
     </section>
 
     <section class="chat">
@@ -73,5 +94,60 @@ function downloadDataset() {
   if (analysis.value?.project_id) {
     window.location.href = `/api/download_dataset/${analysis.value.project_id}`
   }
+}
+
+async function completeDataset() {
+  if (!analysis.value?.project_id) return
+  loading.value = true
+  const res = await fetch(`/api/complete_dataset/${analysis.value.project_id}`, {
+    method: 'POST'
+  })
+  trainResult.value = JSON.stringify(await res.json(), null, 2)
+  loading.value = false
+}
+
+async function startTraining() {
+  if (!analysis.value?.project_id) return
+  training.value = true
+  liveLog.value = ''
+  trainResult.value = ''
+  if (logInterval) clearInterval(logInterval)
+  logInterval = setInterval(fetchLog, 2000)
+  const res = await fetch(`/api/auto_train/${analysis.value.project_id}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model_name: modelName.value, mode: mode.value })
+  })
+  const data = await res.json()
+  trainResult.value = data.message || ''
+  if (data.status === 'ok') {
+    clearInterval(logInterval)
+    logInterval = null
+    training.value = false
+  }
+}
+
+async function downloadAdapter() {
+  if (analysis.value?.project_id) {
+    window.location.href = `/api/download_adapter/${analysis.value.project_id}`
+    if (logInterval) {
+      clearInterval(logInterval)
+      logInterval = null
+    }
+    training.value = false
+  }
+}
+
+function downloadLog() {
+  if (analysis.value?.project_id) {
+    window.location.href = `/api/download_log/${analysis.value.project_id}`
+  }
+}
+
+async function fetchLog() {
+  if (!analysis.value?.project_id) return
+  const res = await fetch(`/api/log/${analysis.value.project_id}`)
+  const data = await res.json()
+  liveLog.value = data.log
 }
 </script>
