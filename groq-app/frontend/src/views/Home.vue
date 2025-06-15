@@ -69,6 +69,7 @@ const training = ref(false)
 const trainResult = ref('')
 const liveLog = ref('')
 const lastModified = ref('')
+let logInterval = null
 
 async function send() {
   const res = await fetch('/api/chat', {
