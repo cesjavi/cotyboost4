@@ -149,7 +149,11 @@ def complete_dataset(project_id):
         if not item.get("output"):
             prompt = f"{item['instruction']}\n\n{item['input']}"
             response = send_prompt(prompt)
-            item["output"] = response["choices"][0]["message"]["content"]
+            try:
+                item["output"] = response["choices"][0]["message"]["content"]
+            except Exception as e:
+                print("⚠️ Respuesta inesperada de Groq:", response)
+                item["output"] = f"❌ Error en respuesta de Groq: {str(response)}"
             completados += 1
 
     with open(dataset_path, 'w', encoding='utf-8') as f:
@@ -202,17 +206,29 @@ def auto_train(project_id):
         "message": f"Entrenamiento iniciado con modelo {model_name} en modo {mode}"
     })
 
+from datetime import datetime  # <-- asegurate de importar esto arriba
+
 @app.route('/api/log/<project_id>', methods=['GET'])
 def get_log(project_id):
     log_path = os.path.join('temp_projects', project_id, 'train.log')
     if not os.path.exists(log_path):
-        return jsonify({"log": "⏳ Entrenamiento aún no comenzó..."})
+        return jsonify({
+            "log": "⏳ Entrenamiento aún no comenzó...",
+            "last_modified": None
+        })
     try:
         with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
-            contenido = f.read()[-5000:]  # lee los últimos 5000 caracteres
-        return jsonify({"log": contenido})
+            contenido = f.read()[-5000:]
+        last_modified = datetime.fromtimestamp(os.path.getmtime(log_path)).strftime('%Y-%m-%d %H:%M:%S')
+        return jsonify({
+            "log": contenido,
+            "last_modified": last_modified
+        })
     except Exception as e:
-        return jsonify({"log": f"⚠️ Error leyendo log: {str(e)}"})
+        return jsonify({
+            "log": f"⚠️ Error leyendo log: {str(e)}",
+            "last_modified": None
+        })
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -40,6 +40,7 @@
         <button @click="startTraining" :disabled="loading || training">Entrenar</button>
         <button @click="downloadAdapter" :disabled="loading || training">Descargar adapter</button>
         <button @click="downloadLog" :disabled="loading || training">Descargar log</button>
+        <p>Última modificación: {{ lastModified }}</p>
         <pre>{{ liveLog }}</pre>
       </div>
     </section>
@@ -67,6 +68,8 @@ const mode = ref('lora')
 const training = ref(false)
 const trainResult = ref('')
 const liveLog = ref('')
+const lastModified = ref('')
+
 async function send() {
   const res = await fetch('/api/chat', {
     method: 'POST',
@@ -147,5 +150,6 @@ async function fetchLog() {
   const res = await fetch(`/api/log/${analysis.value.project_id}`)
   const data = await res.json()
   liveLog.value = data.log
+  lastModified.value = data.last_modified
 }
 </script>
