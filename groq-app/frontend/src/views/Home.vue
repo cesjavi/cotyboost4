@@ -19,24 +19,8 @@
       </ul>
       <h3>Preview dataset</h3>
       <pre>{{ JSON.stringify(analysis.dataset_preview, null, 2) }}</pre>
+      <pre>{{ analysis.log_preview }}</pre>
       <button @click="downloadDataset">Descargar dataset</button>
-
-      <h3>Entrenamiento</h3>
-      <select v-model="modelName">
-        <option value="codellama/CodeLlama-7b-hf">CodeLlama 7B</option>
-        <option value="meta-llama/Meta-Llama-3-8B-Instruct">LLaMA3 8B</option>
-      </select>
-      <select v-model="mode">
-        <option value="lora">LoRA</option>
-        <option value="qlora">QLoRA</option>
-      </select>
-      <button @click="autoTrain" :disabled="training">Entrenar</button>
-      <pre>{{ trainResult }}</pre>
-
-      <h4>Log en vivo</h4>
-      <pre style="background:#000; color:#0f0; max-height:400px; overflow:auto;">
-{{ liveLog }}
-      </pre>
     </section>
 
     <section class="chat">
@@ -89,38 +73,5 @@ function downloadDataset() {
   if (analysis.value?.project_id) {
     window.location.href = `/api/download_dataset/${analysis.value.project_id}`
   }
-}
-
-function startLogStream() {
-  if (!analysis.value?.project_id) return
-  logInterval = setInterval(async () => {
-    const res = await fetch(`/api/log/${analysis.value.project_id}`)
-    const data = await res.json()
-    liveLog.value = data.log
-  }, 3000)
-}
-
-async function autoTrain() {
-  if (!analysis.value?.project_id) {
-    trainResult.value = "❌ No hay análisis cargado."
-    return
-  }
-
-  training.value = true
-  trainResult.value = "⏳ Iniciando entrenamiento..."
-  startLogStream()
-
-  const res = await fetch(`/auto_train/${analysis.value.project_id}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model_name: modelName.value,
-      mode: mode.value
-    })
-  })
-
-  const data = await res.json()
-  trainResult.value = JSON.stringify(data, null, 2)
-  training.value = false
 }
 </script>
