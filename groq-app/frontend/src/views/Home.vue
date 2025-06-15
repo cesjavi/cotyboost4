@@ -67,7 +67,7 @@ const mode = ref('lora')
 const training = ref(false)
 const trainResult = ref('')
 const liveLog = ref('')
-@@ -52,26 +73,81 @@ async function send() {
+async function send() {
   const res = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
