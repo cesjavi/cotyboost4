@@ -31,21 +31,29 @@ def train_stream(project_id):
         "--output_dir", f"temp_projects/{project_id}/adapter"
     ]
 
+    log_path = f"temp_projects/{project_id}/train.log"
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+
     # Lanzar el proceso en segundo plano
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
         start_new_session=True,
     )
     training_processes[project_id] = process
 
     def generate():
-        for line in process.stdout:
-            yield f"data: {line}\n\n"
-        for line in process.stderr:
-            yield f"data: {line}\n\n"
+        with open(log_path, "a") as log:
+            for line in iter(process.stdout.readline, ""):
+                print(line, end="")
+                log.write(line)
+                log.flush()
+                yield f"data: {line}\n\n"
+        process.wait()
+        training_processes.pop(project_id, None)
 
     return Response(generate(), content_type='text/event-stream')
 @app.route('/stop_train', methods=['POST'])
