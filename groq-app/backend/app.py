@@ -179,7 +179,14 @@ def auto_train(project_id):
         if not item.get("output"):
             prompt = f"{item['instruction']}\n\n{item['input']}"
             response = send_prompt(prompt)
-            item["output"] = response["choices"][0]["message"]["content"]
+            if response.get("error"):
+                item["output"] = f"❌ Error en respuesta de Groq: {response.get('error')} - Raw: {response.get('raw')}"
+            else:
+                try:
+                    item["output"] = response["choices"][0]["message"]["content"]
+                except (KeyError, IndexError) as e:
+                    print(f"⚠️ Respuesta inesperada de Groq (auto_train): {response}, error: {e}")
+                    item["output"] = f"❌ Error procesando respuesta de Groq: {str(response)}"
             completados += 1
 
     with open(dataset_path, 'w', encoding='utf-8') as f:
