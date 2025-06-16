@@ -208,7 +208,7 @@ def auto_train(project_id):
     })
 
 
-@app.route('/api/log/<project_id>', methods=['GET'])
+@app.route('/log/<project_id>', methods=['GET'])
 def get_log(project_id):
     log_path = os.path.join('temp_projects', project_id, 'train.log')
     if not os.path.exists(log_path):
