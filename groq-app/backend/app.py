@@ -14,7 +14,7 @@ import glob
 app = Flask(__name__)
 CORS(app)
 
-@app.route("/api/chat", methods=["POST"])
+@app.route("/chat", methods=["POST"])
 def chat():
     prompt = request.json.get("prompt", "")
     response = send_prompt(prompt)
