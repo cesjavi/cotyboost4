@@ -166,47 +166,56 @@ def complete_dataset(project_id):
 def auto_train(project_id):
     folder_path = os.path.join('temp_projects', project_id)
     dataset_path = os.path.join(folder_path, 'dataset.json')
-
-    if not os.path.exists(dataset_path):
-        return jsonify({'error': 'Dataset no encontrado.'}), 404
-
-    # 1. Cargar y completar dataset con Groq
-    with open(dataset_path, 'r', encoding='utf-8') as f:
-        dataset = json.load(f)
-
-    completados = 0
-    for item in dataset:
-        if not item.get("output"):
-            prompt = f"{item['instruction']}\n\n{item['input']}"
-            response = send_prompt(prompt)
-            if response.get("error"):
-                item["output"] = f"❌ Error en respuesta de Groq: {response.get('error')} - Raw: {response.get('raw')}"
-            else:
-                try:
-                    item["output"] = response["choices"][0]["message"]["content"]
-                except (KeyError, IndexError) as e:
-                    print(f"⚠️ Respuesta inesperada de Groq (auto_train): {response}, error: {e}")
-                    item["output"] = f"❌ Error procesando respuesta de Groq: {str(response)}"
-            completados += 1
-
-    with open(dataset_path, 'w', encoding='utf-8') as f:
-        json.dump(dataset, f, indent=2, ensure_ascii=False)
-
-    # 2. Ejecutar entrenamiento vía train_controller.py (como subprocess)
-    mode = request.json.get("mode", "lora")
-    model_name = request.json.get("model_name", "codellama/CodeLlama-7b-hf")
-
     log_path = os.path.join(folder_path, "train.log")
-    command = [
-        "accelerate", "launch", "utils/lora_trainer.py",
-        "--model_name", model_name,
-        "--mode", mode,
-        "--dataset_path", dataset_path,
-        "--output_dir", os.path.join(folder_path, "adapter")
-    ]
+    with open(log_path, "w", encoding="utf-8") as log:
+        if not os.path.exists(dataset_path):
+            return jsonify({'error': 'Dataset no encontrado.'}), 404
 
-    with open(log_path, "w") as log:
-        subprocess.Popen(command, stdout=log, stderr=log)
+        # 1. Cargar y completar dataset con Groq
+        with open(dataset_path, 'r', encoding='utf-8') as f:
+            dataset = json.load(f)
+
+        completados = 0
+        for item in dataset:
+            if not item.get("output"):
+                prompt = f"{item['instruction']}\n\n{item['input']}"
+                response = send_prompt(prompt)
+                if response.get("error"):
+                    item["output"] = f"❌ Error en respuesta de Groq: {response.get('error')} - Raw: {response.get('raw')}"
+                else:
+                    try:
+                        item["output"] = response["choices"][0]["message"]["content"]
+                        print(f"✅ Respuesta procesada: {item['output'][:50]}...\n")  
+                        log.write(f"✅ Respuesta procesada: {item['output'][:50]}...\n")  
+                    except (KeyError, IndexError) as e:
+                        print(f"⚠️ Respuesta inesperada de Groq (auto_train): {response}, error: {e}")
+                        log.write(f"⚠️ Respuesta inesperada de Groq (auto_train): {response}, error: {e}")
+                        item["output"] = f"❌ Error procesando respuesta de Groq: {str(response)}"
+                completados += 1
+
+        with open(dataset_path, 'w', encoding='utf-8') as f:
+            json.dump(dataset, f, indent=2, ensure_ascii=False)
+
+        # 2. Ejecutar entrenamiento vía train_controller.py (como subprocess)
+        mode = request.json.get("mode", "lora")
+        model_name = request.json.get("model_name", "codellama/CodeLlama-7b-hf")
+
+        log_path = os.path.join(folder_path, "train.log")
+        command = [
+            "accelerate", "launch", "utils/lora_trainer.py",
+            "--model_name", model_name,
+            "--mode", mode,
+            "--dataset_path", dataset_path,
+            "--output_dir", os.path.join(folder_path, "adapter")
+        ]
+        
+        log.write("🚀 Iniciando entrenamiento...\n")
+        log.flush()
+        try:
+            subprocess.Popen(command, stdout=log, stderr=log)
+            log.write("✅ Popen lanzado correctamente.\n")
+        except Exception as e:
+            log.write(f"❌ Error lanzando subprocess: {str(e)}\n")
 
     return jsonify({
         "status": "ok",
