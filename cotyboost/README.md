@@ -61,6 +61,49 @@ Abrir `http://localhost:5173` en el navegador.
 4. Entrenar modelo (LoRA o QLoRA sugerido)
 5. Realizar inferencia
 6. Descargar adaptador `.bin`
+7. Integrar el adaptador en una extensión de VS Code para obtener asistencia en tiempo real.
+
+## Diagrama conceptual
+
+```
+┌───────────────────────────────────────────┐
+│              Usuario final                │
+└───────────────────────────────────────────┘
+              │
+              ▼
+┌───────────────────────────────────────────┐
+│    Subida de ZIP o URL de GitHub         │
+│  (/process_project en backend Flask)     │
+└───────────────────────────────────────────┘
+              │
+              ▼
+┌───────────────────────────────────────────┐
+│    Análisis del código fuente            │
+│  (utils/analyzer.py y rutas en Flask)    │
+└───────────────────────────────────────────┘
+              │
+              ▼
+┌───────────────────────────────────────────┐
+│  Generación automática de dataset         │
+└───────────────────────────────────────────┘
+              │
+              ▼
+┌───────────────────────────────────────────┐
+│      Entrenamiento LoRA/QLoRA             │
+│  (train_qlora.py con accelerate)          │
+└───────────────────────────────────────────┘
+              │
+              ▼
+┌───────────────────────────────────────────┐
+│  Adaptador resultante (.bin)              │
+└───────────────────────────────────────────┘
+              │
+              ▼
+┌───────────────────────────────────────────┐
+│ Extensión de VS Code                      │
+│ Utiliza el adaptador para asistencia      │
+└───────────────────────────────────────────┘
+```
 
 ---
 
