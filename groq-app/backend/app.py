@@ -103,7 +103,7 @@ def download_dataset(project_id):
 @app.route('/download_adapter/<project_id>', methods=['GET'])
 def download_adapter(project_id):
     folder_path = os.path.join('temp_projects', project_id)
-    adapter_path = os.path.join(folder_path, 'adapter', 'pytorch_model.bin')
+    adapter_path = os.path.join(folder_path, 'adapter', 'adapter_model.bin')
     analysis_path = os.path.join(folder_path, 'analysis.json')
     if os.path.exists(adapter_path):
         filename = 'adapter.bin'
