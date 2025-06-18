@@ -86,8 +86,8 @@ export default {
       const model = this.analysis.suggested_model;
       const mode = this.analysis.recommendation.toLowerCase();
       const projectId = this.analysis.project_id || 'PROYECTO_ID';
-      const path = `temp_projects/${projectId}/dataset.json`;
-      const output = `temp_projects/${projectId}/adapter`;
+      const path = `backend/temp_projects/${projectId}/dataset.json`;
+      const output = `backend/temp_projects/${projectId}/adapter`;
       return `accelerate launch train_qlora.py \
   --model_name ${model} \
   --mode ${mode} \
