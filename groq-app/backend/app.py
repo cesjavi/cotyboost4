@@ -3,6 +3,7 @@ from flask_cors import CORS
 from groq_api import send_prompt
 from analyzer import analyze_project
 from datetime import datetime
+import shutil
 import os
 import zipfile
 import subprocess
