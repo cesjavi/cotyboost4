@@ -1,43 +1,54 @@
 from flask import Blueprint, request, jsonify, send_file
-import os, uuid, zipfile, shutil
+import os, zipfile, shutil
 import subprocess
 import re
 from utils.analyzer import analyze_project
 import json
 import glob
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+TEMP_ROOT = os.path.join(BASE_DIR, "temp_projects")
+
 project_bp = Blueprint('project', __name__)
 
 @project_bp.route('/process_project/', methods=['POST'])
 def process_project():
     try:
-        project_id = f"{uuid.uuid4().hex[:8]}"
-        extract_path = os.path.join("temp_projects", project_id)
-        os.makedirs(extract_path, exist_ok=True)
+        project_name = None
+        extract_path = None
 
         # ZIP upload
         if 'file' in request.files:
             zip_file = request.files['file']
-            zip_path = os.path.join(extract_path, 'source.zip')
-            zip_file.save(zip_path)
-
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(extract_path)
-
             project_name = os.path.splitext(zip_file.filename)[0].replace(" ", "_")
-
-        # GitHub URL
         elif request.json and 'github_url' in request.json:
             github_url = request.json['github_url']
-            # Validate GitHub HTTPS URL before cloning
-            pattern = re.compile(r"^https://github\.com/[^/]+/[^/]+(\.git)?$")
-            if not pattern.match(github_url):
+            pattern = re.compile(r"^https://github\.com/([^/]+)/([^/]+)(\.git)?$")
+            match = pattern.match(github_url)
+            if not match:
                 return jsonify({"error": "Invalid GitHub URL"}), 400
-
-            subprocess.run(["git", "clone", github_url, extract_path], check=True)
-            project_name = github_url.strip('/').split('/')[-1].replace(" ", "_")
+            project_name = match.group(2).replace(" ", "_")
         else:
             return jsonify({"error": "No se recibió ZIP ni GitHub URL"}), 400
+        project_id = project_name
+        extract_path = os.path.join(TEMP_ROOT, project_id)
+        os.makedirs(extract_path, exist_ok=True)
+
+        if 'file' in request.files:
+            zip_path = os.path.join(extract_path, 'source.zip')
+            zip_file.save(zip_path)
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(extract_path)
+        else:  # GitHub URL
+            if os.path.exists(os.path.join(extract_path, '.git')):
+                try:
+                    subprocess.run(['git', '-C', extract_path, 'pull'], check=True)
+                except Exception:
+                    shutil.rmtree(extract_path)
+                    subprocess.run(['git', 'clone', github_url, extract_path], check=True)
+            else:
+                subprocess.run(['git', 'clone', github_url, extract_path], check=True)
+
 
         analysis = analyze_project(extract_path)
         analysis['project_id'] = project_id
@@ -81,7 +92,7 @@ def process_project():
 
 @project_bp.route('/download_dataset/<project_id>', methods=['GET'])
 def download_dataset(project_id):
-    folder_path = os.path.join("temp_projects", project_id)
+    folder_path = os.path.join(TEMP_ROOT, project_id)
     dataset_path = os.path.join(folder_path, "dataset.json")
     analysis_path = os.path.join(folder_path, "analysis.json")
     if os.path.exists(dataset_path):
@@ -97,7 +108,7 @@ def download_dataset(project_id):
 
 @project_bp.route('/download_adapter/<project_id>', methods=['GET'])
 def download_adapter(project_id):
-    folder_path = os.path.join("temp_projects", project_id)
+    folder_path = os.path.join(TEMP_ROOT, project_id)
     adapter_path = os.path.join(folder_path, "adapter", "adapter_model.bin")
     analysis_path = os.path.join(folder_path, "analysis.json")
     if os.path.exists(adapter_path):
@@ -113,7 +124,7 @@ def download_adapter(project_id):
 
 @project_bp.route('/download_log/<project_id>', methods=['GET'])
 def download_log(project_id):
-    folder_path = os.path.join("temp_projects", project_id)
+    folder_path = os.path.join(TEMP_ROOT, project_id)
     log_path = os.path.join(folder_path, "train.log")
     analysis_path = os.path.join(folder_path, "analysis.json")
     if os.path.exists(log_path):

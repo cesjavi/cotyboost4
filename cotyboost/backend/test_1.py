@@ -11,7 +11,7 @@ base_model = AutoModelForCausalLM.from_pretrained(
 )
 
 tokenizer = AutoTokenizer.from_pretrained("codellama/CodeLlama-7b-hf")
-model = PeftModel.from_pretrained(base_model, "temp_projects/5b794ac9/adapter")
+model = PeftModel.from_pretrained(base_model, "backend/temp_projects/5b794ac9/adapter")
 
 prompt = "Instrucción: Explica qué hace este código.\
 Input:\

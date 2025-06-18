@@ -4,6 +4,9 @@ import re
 import subprocess
 import json
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+TEMP_ROOT = os.path.join(BASE_DIR, "temp_projects")
+
 metrics_bp = Blueprint('metrics', __name__)
 
 @metrics_bp.route("/train_metrics/<project_id>", methods=["GET"])
@@ -18,7 +21,7 @@ def get_metrics(project_id):
 
 def get_loss_from_log(project_id):
     """Read the latest loss value from ``temp_projects/<project_id>/train.log``."""
-    log_path = f"temp_projects/{project_id}/train.log"
+    log_path = os.path.join(TEMP_ROOT, project_id, "train.log")
     if not os.path.exists(log_path):
         return None
     loss = None

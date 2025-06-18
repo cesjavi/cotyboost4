@@ -3,6 +3,9 @@ import subprocess
 import os
 import time
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+TEMP_ROOT = os.path.join(BASE_DIR, "temp_projects")
+
 train_bp = Blueprint('train', __name__)
 
 @train_bp.route('/train', methods=['POST'])
@@ -15,9 +18,9 @@ def launch_training():
     if not all([project_id, model_name, mode]):
         return jsonify({"error": "Missing parameters"}), 400
 
-    dataset_path = f"temp_projects/{project_id}/dataset.json"
-    output_dir = f"temp_projects/{project_id}/adapter"
-    log_file = f"temp_projects/{project_id}/train.log"
+    dataset_path = os.path.join(TEMP_ROOT, project_id, "dataset.json")
+    output_dir = os.path.join(TEMP_ROOT, project_id, "adapter")
+    log_file = os.path.join(TEMP_ROOT, project_id, "train.log")
 
     command = [
         "accelerate", "launch", "train_qlora.py",
@@ -31,14 +34,14 @@ def launch_training():
 
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
-    with open(log_file, "w") as log:
+    with open(log_file, "a") as log:
         subprocess.Popen(command, stdout=log, stderr=log, env=env)
 
     return jsonify({"status": "Training started", "log_file": log_file})
 
 @train_bp.route('/train_stream/<project_id>')
 def train_stream_route(project_id):
-    log_file_path = f"temp_projects/{project_id}/train.log"
+    log_file_path = os.path.join(TEMP_ROOT, project_id, "train.log")
 
     def generate_log_updates(log_file_path):
         try:
