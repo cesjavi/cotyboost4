@@ -28,8 +28,11 @@ def launch_training():
     ]
 
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
+
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
     with open(log_file, "w") as log:
-        subprocess.Popen(command, stdout=log, stderr=log)
+        subprocess.Popen(command, stdout=log, stderr=log, env=env)
 
     return jsonify({"status": "Training started", "log_file": log_file})
 
