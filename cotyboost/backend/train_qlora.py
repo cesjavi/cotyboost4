@@ -14,12 +14,12 @@ parser.add_argument("--dataset_path", required=True)
 parser.add_argument("--output_dir", required=True)
 args = parser.parse_args()
 
-print("🔁 Cargando tokenizer...")
+print("🔁 Cargando tokenizer...", flush=True)
 tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
 
-print("🧠 Cargando modelo base en 4-bit...")
+print("🧠 Cargando modelo base en 4-bit...", flush=True)
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=(args.mode == "qlora"),
     bnb_4bit_compute_dtype=torch.float16,
@@ -33,7 +33,7 @@ model = AutoModelForCausalLM.from_pretrained(
     device_map="auto"
 )
 
-print("🎛️ Preparando modelo...")
+print("🎛️ Preparando modelo...", flush=True)
 model = prepare_model_for_kbit_training(model)
 """lora_config = LoraConfig(
     r=16,
@@ -62,7 +62,7 @@ lora_config = LoraConfig(
 model = get_peft_model(model, lora_config)
 
 
-print("📚 Cargando dataset...")
+print("📚 Cargando dataset...", flush=True)
 with open(args.dataset_path, "r") as f:
     raw_data = json.load(f)
 dataset = Dataset.from_list(raw_data)
@@ -79,7 +79,7 @@ tokenized = dataset.map(tokenize)
 
 data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
-print("🚀 Entrenando modelo...")
+print("🚀 Entrenando modelo...", flush=True)
 training_args = TrainingArguments(
     output_dir=args.output_dir,
     per_device_train_batch_size=1,
@@ -100,8 +100,8 @@ trainer = Trainer(
 
 trainer.train()
 
-print("💾 Guardando adaptador...")
+print("💾 Guardando adaptador...", flush=True)
 os.makedirs(args.output_dir, exist_ok=True)
 model.save_pretrained(args.output_dir)
 
-print("✅ Finalizado. Adaptador guardado en:", args.output_dir)
+print("✅ Finalizado. Adaptador guardado en:", args.output_dir, flush=True)
