@@ -10,6 +10,9 @@ import re
 import json
 import glob
 
+print("Iniciando app...")
+print("GROQ_API_KEY:", os.environ.get("GROQ_API_KEY"))
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMP_ROOT = os.path.join(BASE_DIR, "temp_projects")
 
@@ -22,8 +25,8 @@ def chat():
     response = send_prompt(prompt)
     return jsonify(response)
 
-
-@app.route('/process_project/', methods=['POST'])
+@app.route("/process_project/", methods=["POST"]) 
+@app.route("/process_project", methods=["POST"]) 
 def process_project():
     try:
         project_name = None
@@ -217,7 +220,7 @@ def auto_train(project_id):
 
         log_path = os.path.join(folder_path, "train.log")
         command = [
-            "accelerate", "launch", "utils/lora_trainer.py",
+            "accelerate", "launch", "groq-app/backend/utils/lora_trainer.py",
             "--model_name", model_name,
             "--mode", mode,
             "--dataset_path", dataset_path,

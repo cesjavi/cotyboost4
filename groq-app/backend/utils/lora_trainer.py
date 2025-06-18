@@ -6,6 +6,15 @@ from datasets import load_dataset, Dataset
 from peft import get_peft_model, LoraConfig, TaskType, prepare_model_for_kbit_training
 import torch
 import os
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
+model.gradient_checkpointing_disable()
+print("📦 Intentando cargar modelo...")
+model = AutoModelForCausalLM.from_pretrained(
+    "codellama/CodeLlama-7b-hf",
+    torch_dtype=torch.float16,
+    device_map="auto"
+)
 
 def load_json_dataset(path):
     with open(path, "r", encoding="utf-8") as f:
@@ -25,6 +34,8 @@ def main():
     print(f"📚 Cargando modelo {args.model_name} en modo {args.mode}")
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
     dataset = load_json_dataset(args.dataset_path)
 
     def tokenize(example):

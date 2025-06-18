@@ -24,3 +24,4 @@ groq-app/backend/temp_projects/
 # OS files
 .DS_Store
 /temp_projects
+/groq-app/venvwsl
