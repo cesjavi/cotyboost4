@@ -181,6 +181,46 @@ def complete_dataset(project_id):
 
     return jsonify({"status": "ok", "completados": completados})
 
+
+def train_project(project_id):
+    """Launch training process for a given project."""
+    folder_path = os.path.join(TEMP_ROOT, project_id)
+    dataset_path = os.path.join(folder_path, 'dataset.json')
+    log_path = os.path.join(folder_path, "train.log")
+
+    with open(log_path, "a", encoding="utf-8") as log:
+        if not os.path.exists(dataset_path):
+            return jsonify({'error': 'Dataset no encontrado.'}), 404
+
+        mode = request.json.get("mode", "lora")
+        model_name = request.json.get("model_name", "codellama/CodeLlama-7b-hf")
+
+        command = [
+            "accelerate", "launch", "groq-app/backend/utils/lora_trainer.py",
+            "--model_name", model_name,
+            "--mode", mode,
+            "--dataset_path", dataset_path,
+            "--output_dir", os.path.join(folder_path, "adapter")
+        ]
+
+        log.write("🚀 Iniciando entrenamiento...\n")
+        log.flush()
+        try:
+            subprocess.Popen(command, stdout=log, stderr=log)
+            log.write("✅ Popen lanzado correctamente.\n")
+        except Exception as e:
+            log.write(f"❌ Error lanzando subprocess: {str(e)}\n")
+
+    return jsonify({
+        "status": "ok",
+        "message": f"Entrenamiento iniciado con modelo {model_name} en modo {mode}"
+    })
+
+
+@app.route('/train/<project_id>', methods=['POST'])
+def train_project_route(project_id):
+    return train_project(project_id)
+
 @app.route('/auto_train/<project_id>', methods=['POST'])
 def auto_train(project_id):
     folder_path = os.path.join(TEMP_ROOT, project_id)
@@ -215,32 +255,10 @@ def auto_train(project_id):
         with open(dataset_path, 'w', encoding='utf-8') as f:
             json.dump(dataset, f, indent=2, ensure_ascii=False)
 
-        # 2. Ejecutar entrenamiento vía train_controller.py (como subprocess)
-        mode = request.json.get("mode", "lora")
-        model_name = request.json.get("model_name", "codellama/CodeLlama-7b-hf")
-
-        log_path = os.path.join(folder_path, "train.log")
-        command = [
-            "accelerate", "launch", "groq-app/backend/utils/lora_trainer.py",
-            "--model_name", model_name,
-            "--mode", mode,
-            "--dataset_path", dataset_path,
-            "--output_dir", os.path.join(folder_path, "adapter")
-        ]
-        
-        log.write("🚀 Iniciando entrenamiento...\n")
-        log.flush()
-        try:
-            subprocess.Popen(command, stdout=log, stderr=log)
-            log.write("✅ Popen lanzado correctamente.\n")
-        except Exception as e:
-            log.write(f"❌ Error lanzando subprocess: {str(e)}\n")
-
-    return jsonify({
-        "status": "ok",
-        "completados": completados,
-        "message": f"Entrenamiento iniciado con modelo {model_name} en modo {mode}"
-    })
+    response = train_project(project_id)
+    data = response.get_json()
+    data["completados"] = completados
+    return jsonify(data), response.status_code
 
 
 @app.route('/log/<project_id>', methods=['GET'])

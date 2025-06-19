@@ -36,7 +36,7 @@
             <option value="full">full</option>
           </select>
         </label>
-        <button @click="completeDataset" :disabled="loading || training">Completar dataset</button>
+        <button @click="completeDataset" :disabled="loading || training">Generar dataset</button>
         <button @click="startTraining" :disabled="loading || training">Entrenar</button>
         <button @click="downloadAdapter" :disabled="loading || training">Descargar adapter</button>
         <button @click="downloadLog" :disabled="loading || training">Descargar log</button>
@@ -115,7 +115,7 @@ async function startTraining() {
   trainResult.value = ''
   if (logInterval) clearInterval(logInterval)
   logInterval = setInterval(fetchLog, 2000)
-  const res = await fetch(`/api/auto_train/${analysis.value.project_id}`, {
+  const res = await fetch(`/api/train/${analysis.value.project_id}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model_name: modelName.value, mode: mode.value })
