@@ -1,8 +1,12 @@
 <template>
   <div class="container">
     <h1>MyQLoraApp</h1>
+    <div class="tabs">
+      <button :class="{active: activeTab==='train'}" @click="activeTab='train'">Entrenamiento</button>
+      <button :class="{active: activeTab==='inference'}" @click="activateInferenceTab">Inferencia</button>
+    </div>
 
-    <section class="upload-section">
+    <section v-if="activeTab==='train'" class="upload-section">
       <h2>1. Subir ZIP o ingresar GitHub</h2>
       <input type="file" @change="handleFile" accept=".zip" />
       <p>o</p>
@@ -12,7 +16,7 @@
       </button>
     </section>
 
-    <section v-if="analysis" class="result-section">
+    <section v-if="activeTab==='train' && analysis" class="result-section">
       <h2>📁 Proyecto: {{ analysis.project_name }}</h2>
       <h2>2. Resultado del Análisis</h2>
       <ul>
@@ -56,6 +60,25 @@
       </div>
     </section>
 
+    <section v-if="activeTab==='inference'" class="projects-section">
+      <h2>Proyectos Procesados</h2>
+      <select v-model="selectedProject">
+        <option disabled value="">Selecciona un proyecto</option>
+        <option v-for="p in projects" :key="p.id" :value="p.id">
+          {{ p.name }} - {{ p.model }}
+        </option>
+      </select>
+    </section>
+
+    <section v-if="activeTab==='inference'" class="inference-box">
+      <textarea v-model="inferencePrompt" placeholder="Ingresa tu prompt"></textarea>
+      <button @click="runInference" :disabled="!selectedProject || !inferencePrompt">Enviar</button>
+      <div v-if="inferenceResult">
+        <h3>Respuesta:</h3>
+        <pre>{{ inferenceResult }}</pre>
+      </div>
+    </section>
+
     <div v-if="error" class="error">⚠️ Error: {{ error }}</div>
   </div>
 </template>
@@ -77,7 +100,12 @@ export default {
       metrics: null,
       metricsInterval: null,
       trainingLog: "",
-      eventSource: null
+      eventSource: null,
+      activeTab: 'train',
+      projects: [],
+      selectedProject: '',
+      inferencePrompt: '',
+      inferenceResult: ''
     };
   },
   computed: {
@@ -151,6 +179,33 @@ export default {
         this.metrics = response.data;
       } catch (e) {
         console.error('Error fetching metrics:', e);
+      }
+    },
+
+    activateInferenceTab() {
+      this.activeTab = 'inference';
+      this.loadProjects();
+    },
+
+    async loadProjects() {
+      try {
+        const response = await axios.get('http://localhost:5000/list_projects');
+        this.projects = response.data.projects;
+      } catch (e) {
+        console.error('Error fetching projects:', e);
+      }
+    },
+
+    async runInference() {
+      if (!this.selectedProject || !this.inferencePrompt) return;
+      try {
+        const resp = await axios.post('http://localhost:5000/inference', {
+          project_id: this.selectedProject,
+          prompt: this.inferencePrompt
+        });
+        this.inferenceResult = resp.data.result;
+      } catch (e) {
+        this.error = e.response?.data?.error || e.message;
       }
     },
 
@@ -300,6 +355,17 @@ export default {
 
 input[type="file"],
 input[type="text"] {
+  margin: 6px 0;
+  padding: 8px;
+  width: 100%;
+  background: #181d23;
+  color: #fff;
+  border: 1px solid #3b4656;
+  border-radius: 6px;
+}
+
+.projects-section select,
+.inference-box textarea {
   margin: 6px 0;
   padding: 8px;
   width: 100%;

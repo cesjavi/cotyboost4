@@ -4,6 +4,7 @@ from routes.process_project import project_bp
 from routes.train import train_bp
 from routes.metrics import metrics_bp
 from routes.logs import logs_bp
+from routes.inference import inference_bp
 import os
 import signal
 
@@ -13,6 +14,7 @@ app.register_blueprint(logs_bp)
 app.register_blueprint(project_bp)
 app.register_blueprint(train_bp)
 app.register_blueprint(metrics_bp)
+app.register_blueprint(inference_bp)
 
 training_processes = {}
 @app.route('/stop_train', methods=['POST'])
