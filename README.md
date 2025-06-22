@@ -9,6 +9,12 @@ A continuación se resumen los pasos básicos para ejecutar cada una.
 
 ## Ejecución rápida
 
+### Frontend renovado
+
+Cada aplicación incluye ahora un nuevo estilo. Desde la carpeta
+`frontend` ejecute `npm install` para obtener las dependencias y luego
+`npm run dev` para probar la interfaz mejorada.
+
 ### CotyBoost
 
 ```bash
