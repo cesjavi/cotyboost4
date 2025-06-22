@@ -26,7 +26,7 @@
       <div class="actions">
         <button @click="startTraining" :disabled="isTraining">Entrenar Modelo</button>
         <button @click="stopTraining" :disabled="!isTraining">Detener Entrenamiento</button>
-        <p v-if="isTraining" style="color: blue;">🧠 Entrenamiento en curso... (revisá backend para el progreso)</p>
+        <p v-if="isTraining" class="training-progress">🧠 Entrenamiento en curso... (revisá backend para el progreso)</p>
       </div>
 
       <div class="command-box">
@@ -36,12 +36,12 @@
         <button @click="downloadCommand">⬇️ Descargar train.sh</button>
         <button @click="downloadDataset">📁 Descargar dataset.json</button>
         <button v-if="adapterExists" @click="downloadAdapter">📦 Descargar adaptador LoRA</button>
-        <p v-else style="color: gray;">Adaptador aún no generado.</p>
+        <p v-else class="adapter-pending">Adaptador aún no generado.</p>
       </div>
 
       <section v-if="isTraining" class="log-section">
         <h2>📝 Logs de Entrenamiento en Tiempo Real:</h2>
-        <div class="log-box" style="max-height: 300px; overflow-y: auto;">
+        <div class="log-box">
           <pre>{{ trainingLog }}</pre>
         </div>
       </section>
@@ -255,3 +255,103 @@ export default {
   }
 };
 </script>
+<style>
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 16px;
+  background: #181d23;
+  color: #f1f1f1;
+  border-radius: 18px;
+  box-shadow: 0 3px 24px #0008;
+  font-family: 'Inter', sans-serif;
+}
+
+.tabs {
+  margin-bottom: 24px;
+  display: flex;
+  gap: 8px;
+}
+
+.tabs button {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 18px 18px 0 0;
+  background: #262d35;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tabs button.active {
+  background: #536dfe;
+  color: #fff;
+}
+
+.upload-section,
+.projects-section,
+.result-section {
+  margin-bottom: 24px;
+  background: #232936;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 2px 6px #0005;
+}
+
+input[type="file"],
+input[type="text"] {
+  margin: 6px 0;
+  padding: 8px;
+  width: 100%;
+  background: #181d23;
+  color: #fff;
+  border: 1px solid #3b4656;
+  border-radius: 6px;
+}
+
+button {
+  margin: 6px 6px 6px 0;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #536dfe;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button:disabled {
+  background: #333b44;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.command-box pre, .log-box pre, .inference-box pre {
+  background: #1a1e25;
+  color: #aaf;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.log-box {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.training-progress {
+  color: blue;
+}
+
+.adapter-pending {
+  color: gray;
+}
+
+.error {
+  color: #ff7979;
+  background: #291819;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 16px;
+}
+</style>
