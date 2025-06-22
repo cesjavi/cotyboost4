@@ -154,3 +154,65 @@ async function fetchLog() {
   lastModified.value = data.last_modified
 }
 </script>
+
+<style>
+/* Dark theme similar to CotyBoost front-end */
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 16px;
+  background: #181d23;
+  color: #f1f1f1;
+  border-radius: 18px;
+  box-shadow: 0 3px 24px #0008;
+  font-family: 'Inter', sans-serif;
+}
+
+.process,
+.analysis,
+.chat {
+  margin-bottom: 24px;
+  background: #232936;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 2px 6px #0005;
+}
+
+input[type="file"],
+input[type="text"],
+textarea,
+select {
+  margin: 6px 0;
+  padding: 8px;
+  width: 100%;
+  background: #181d23;
+  color: #fff;
+  border: 1px solid #3b4656;
+  border-radius: 6px;
+}
+
+button {
+  margin: 6px 6px 6px 0;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #536dfe;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button:disabled {
+  background: #333b44;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+pre {
+  background: #1a1e25;
+  color: #aaf;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+</style>
