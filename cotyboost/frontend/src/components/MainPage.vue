@@ -6,78 +6,39 @@
       <button :class="{active: activeTab==='inference'}" @click="activateInferenceTab">Inferencia</button>
     </div>
 
-    <section v-if="activeTab==='train'" class="upload-section">
-      <h2>1. Subir ZIP o ingresar GitHub</h2>
-      <input type="file" @change="handleFile" accept=".zip" />
-      <p>o</p>
-      <input type="text" v-model="githubUrl" placeholder="https://github.com/usuario/proyecto" />
-      <button @click="processProject" :disabled="isProcessing">
-        Subir y Analizar
-      </button>
-    </section>
+    <UploadSection
+      v-if="activeTab==='train'"
+      :is-processing="isProcessing"
+      v-model:github-url="githubUrl"
+      @file-selected="handleFile"
+      @process-project="processProject"
+    />
 
-    <section v-if="activeTab==='train' && analysis" class="result-section">
-      <h2>📁 Proyecto: {{ analysis.project_name }}</h2>
-      <h2>2. Resultado del Análisis</h2>
-      <ul>
-        <li><strong>Archivos:</strong> {{ analysis.file_count }}</li>
-        <li><strong>Líneas de código:</strong> {{ analysis.total_lines }}</li>
-        <li><strong>Tamaño:</strong> {{ analysis.total_size_mb }} MB</li>
-        <li><strong>Estrategia recomendada:</strong> {{ analysis.recommendation }}</li>
-        <li><strong>Modelo sugerido:</strong> {{ analysis.suggested_model }}</li>
-      </ul>
+    <TrainingControls
+      v-if="activeTab==='train' && analysis"
+      :analysis="analysis"
+      :is-training="isTraining"
+      :adapter-exists="adapterExists"
+      :training-command="trainingCommand"
+      :training-log="trainingLog"
+      :metrics="metrics"
+      @start-training="startTraining"
+      @stop-training="stopTraining"
+      @copy-command="copyCommand"
+      @download-command="downloadCommand"
+      @download-dataset="downloadDataset"
+      @download-adapter="downloadAdapter"
+    />
 
-      <div class="actions">
-        <button @click="startTraining" :disabled="isTraining">Entrenar Modelo</button>
-        <button @click="stopTraining" :disabled="!isTraining">Detener Entrenamiento</button>
-        <p v-if="isTraining" class="training-progress">🧠 Entrenamiento en curso... (revisá backend para el progreso)</p>
-      </div>
-
-      <div class="command-box">
-        <h3>📜 Comando sugerido:</h3>
-        <pre>{{ trainingCommand }}</pre>
-        <button @click="copyCommand">📋 Copiar comando</button>
-        <button @click="downloadCommand">⬇️ Descargar train.sh</button>
-        <button @click="downloadDataset">📁 Descargar dataset.json</button>
-        <button v-if="adapterExists" @click="downloadAdapter">📦 Descargar adaptador LoRA</button>
-        <p v-else class="adapter-pending">Adaptador aún no generado.</p>
-      </div>
-
-      <section v-if="isTraining" class="log-section">
-        <h2>📝 Logs de Entrenamiento en Tiempo Real:</h2>
-        <div class="log-box">
-          <pre>{{ trainingLog }}</pre>
-        </div>
-      </section>
-
-      <div class="metrics-box" v-if="metrics">
-        <h3>📈 Métricas en tiempo real:</h3>
-        <ul>
-          <li><strong>Loss:</strong> {{ metrics.loss }}</li>
-          <li><strong>VRAM usada:</strong> {{ metrics.vram }} MB</li>
-          <li><strong>GPU Load:</strong> {{ metrics.gpu_load }}%</li>
-        </ul>
-      </div>
-    </section>
-
-    <section v-if="activeTab==='inference'" class="projects-section">
-      <h2>Proyectos Procesados</h2>
-      <select v-model="selectedProject">
-        <option disabled value="">Selecciona un proyecto</option>
-        <option v-for="p in projects" :key="p.id" :value="p.id">
-          {{ p.name }} - {{ p.model }}
-        </option>
-      </select>
-    </section>
-
-    <section v-if="activeTab==='inference'" class="inference-box">
-      <textarea v-model="inferencePrompt" placeholder="Ingresa tu prompt"></textarea>
-      <button @click="runInference" :disabled="!selectedProject || !inferencePrompt">Enviar</button>
-      <div v-if="inferenceResult">
-        <h3>Respuesta:</h3>
-        <pre>{{ inferenceResult }}</pre>
-      </div>
-    </section>
+    <InferencePanel
+      v-if="activeTab==='inference'"
+      :projects="projects"
+      v-model:selected-project="selectedProject"
+      v-model:inference-prompt="inferencePrompt"
+      :inference-result="inferenceResult"
+      :is-inferencing="isInferencing"
+      @run-inference="runInference"
+    />
 
     <div v-if="error" class="error">⚠️ Error: {{ error }}</div>
   </div>
@@ -85,9 +46,13 @@
 
 <script>
 import axios from 'axios';
+import UploadSection from './UploadSection.vue';
+import TrainingControls from './TrainingControls.vue';
+import InferencePanel from './InferencePanel.vue';
 
 export default {
   name: 'MainPage',
+  components: { UploadSection, TrainingControls, InferencePanel },
   data() {
     return {
       selectedFile: null,
@@ -105,7 +70,8 @@ export default {
       projects: [],
       selectedProject: '',
       inferencePrompt: '',
-      inferenceResult: ''
+      inferenceResult: '',
+      isInferencing: false
     };
   },
   computed: {
@@ -198,6 +164,7 @@ export default {
 
     async runInference() {
       if (!this.selectedProject || !this.inferencePrompt) return;
+      this.isInferencing = true;
       try {
         const resp = await axios.post('http://localhost:5000/inference', {
           project_id: this.selectedProject,
@@ -206,6 +173,8 @@ export default {
         this.inferenceResult = resp.data.result;
       } catch (e) {
         this.error = e.response?.data?.error || e.message;
+      } finally {
+        this.isInferencing = false;
       }
     },
 
@@ -225,6 +194,11 @@ export default {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+    },
+
+    downloadDataset() {
+      if (!this.analysis?.project_id) return;
+      window.location.href = `http://localhost:5000/download_dataset/${this.analysis.project_id}`;
     },
 
     async startTraining() {
@@ -311,113 +285,53 @@ export default {
 };
 </script>
 <style>
-.container {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 16px;
-  background: #181d23;
-  color: #f1f1f1;
-  border-radius: 18px;
-  box-shadow: 0 3px 24px #0008;
-  font-family: 'Inter', sans-serif;
-}
+  .container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 16px;
+    background: #181d23;
+    color: #f1f1f1;
+    border-radius: 18px;
+    box-shadow: 0 3px 24px #0008;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
 
-.tabs {
-  margin-bottom: 24px;
-  display: flex;
-  gap: 8px;
-}
+  .tabs {
+    margin-bottom: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 
-.tabs button {
-  padding: 8px 20px;
-  border: none;
-  border-radius: 18px 18px 0 0;
-  background: #262d35;
-  color: #fff;
-  cursor: pointer;
-  font-weight: 600;
-}
+  .tabs button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 18px 18px 0 0;
+    background: #262d35;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+  }
 
-.tabs button.active {
-  background: #536dfe;
-  color: #fff;
-}
+  .tabs button.active {
+    background: #536dfe;
+    color: #fff;
+  }
 
-.upload-section,
-.projects-section,
-.result-section {
-  margin-bottom: 24px;
-  background: #232936;
-  padding: 20px;
-  border-radius: 14px;
-  box-shadow: 0 2px 6px #0005;
-}
+  .error {
+    color: #ff7979;
+    background: #291819;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 16px;
+  }
 
-input[type="file"],
-input[type="text"] {
-  margin: 6px 0;
-  padding: 8px;
-  width: 100%;
-  background: #181d23;
-  color: #fff;
-  border: 1px solid #3b4656;
-  border-radius: 6px;
-}
-
-.projects-section select,
-.inference-box textarea {
-  margin: 6px 0;
-  padding: 8px;
-  width: 100%;
-  background: #181d23;
-  color: #fff;
-  border: 1px solid #3b4656;
-  border-radius: 6px;
-}
-
-button {
-  margin: 6px 6px 6px 0;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  background: #536dfe;
-  color: #fff;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-button:disabled {
-  background: #333b44;
-  color: #aaa;
-  cursor: not-allowed;
-}
-
-.command-box pre, .log-box pre, .inference-box pre {
-  background: #1a1e25;
-  color: #aaf;
-  padding: 12px;
-  border-radius: 8px;
-  overflow-x: auto;
-}
-
-.log-box {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.training-progress {
-  color: blue;
-}
-
-.adapter-pending {
-  color: gray;
-}
-
-.error {
-  color: #ff7979;
-  background: #291819;
-  padding: 10px;
-  border-radius: 6px;
-  margin-top: 16px;
-}
-</style>
+  @media (max-width: 600px) {
+    .container {
+      padding: 12px;
+      margin: 10px;
+    }
+  }
+  </style>
