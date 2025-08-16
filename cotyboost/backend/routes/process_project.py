@@ -32,6 +32,10 @@ def process_project():
             return jsonify({"error": "No se recibió ZIP ni GitHub URL"}), 400
         project_id = project_name
         extract_path = os.path.join(TEMP_ROOT, project_id)
+
+        # Ensure a clean extraction directory
+        if os.path.exists(extract_path):
+            shutil.rmtree(extract_path)
         os.makedirs(extract_path, exist_ok=True)
 
         if 'file' in request.files:
