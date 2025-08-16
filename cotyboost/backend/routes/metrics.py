@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import json
+from typing import Optional
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 TEMP_ROOT = os.path.join(BASE_DIR, "temp_projects")
@@ -19,19 +20,48 @@ def get_metrics(project_id):
     }
     return jsonify(metrics)
 
-def get_loss_from_log(project_id):
-    """Read the latest loss value from ``temp_projects/<project_id>/train.log``."""
+def get_loss_from_log(project_id: str) -> Optional[float]:
+    """Read the latest loss value from ``temp_projects/<project_id>/train.log``
+    without loading the entire log file into memory.
+
+    The function scans the log from the end in fixed-size chunks, mimicking the
+    behaviour of ``tail`` to find the most recent occurrence of a ``loss`` value.
+    """
+
     log_path = os.path.join(TEMP_ROOT, project_id, "train.log")
     if not os.path.exists(log_path):
         return None
-    loss = None
-    with open(log_path, "r") as f:
-        for line in reversed(f.readlines()):
-            match = re.search(r"loss[=:]\s*([0-9\.]+)", line)
+
+    loss_pattern = re.compile(r"loss[=:]\s*([0-9\.]+)")
+    chunk_size = 4096
+    with open(log_path, "rb") as f:
+        f.seek(0, os.SEEK_END)
+        buffer = b""
+        position = f.tell()
+
+        while position > 0:
+            read_size = min(chunk_size, position)
+            position -= read_size
+            f.seek(position)
+            buffer = f.read(read_size) + buffer
+
+            lines = buffer.split(b"\n")
+            buffer = lines[0]  # Preserve potential partial line at the start
+
+            for line in reversed(lines[1:]):
+                text = line.decode("utf-8", errors="ignore")
+                match = loss_pattern.search(text)
+                if match:
+                    return round(float(match.group(1)), 4)
+
+        # Check any remaining buffered content
+        if buffer:
+            text = buffer.decode("utf-8", errors="ignore")
+            match = loss_pattern.search(text)
             if match:
-                loss = float(match.group(1))
-                break
-    return round(loss, 4) if loss else None
+                return round(float(match.group(1)), 4)
+
+    return None
 
 def get_gpu_memory_used():
     try:
