@@ -45,9 +45,18 @@ model = prepare_model_for_kbit_training(model)
 )"""
 from peft import LoraConfig, get_peft_model
 
-# Listado de los módulos correctos
-target_modules = [f"transformer.h.{i}.attn.qkv_proj" for i in range(32)] + \
-                 [f"transformer.h.{i}.attn.out_proj" for i in range(32)]
+# Determine target modules dynamically based on model configuration
+num_layers = (
+    getattr(model.config, "num_hidden_layers", None)
+    or getattr(model.config, "n_layer", None)
+    or getattr(model.config, "num_layers", None)
+)
+
+if num_layers and hasattr(model, "transformer"):
+    target_modules = [f"transformer.h.{i}.attn.qkv_proj" for i in range(num_layers)]
+    target_modules += [f"transformer.h.{i}.attn.out_proj" for i in range(num_layers)]
+else:
+    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj"]
 
 # Configuración de LoRA
 lora_config = LoraConfig(
