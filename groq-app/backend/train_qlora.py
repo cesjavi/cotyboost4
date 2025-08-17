@@ -6,6 +6,27 @@ from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from datasets import load_dataset, Dataset
 import json
 import argparse
+# -*- coding: utf-8 -*-
+import sys
+
+# Fuerza UTF-8 en Windows (y en cualquier entorno)
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+os.environ.setdefault("PYTHONUTF8", "1")
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
+def p(msg: str, icon: str = ""):
+    enc = (sys.stdout.encoding or "").lower()
+    # Si la salida es UTF, mostramos el icono; si no, evitamos el emoji
+    if "utf" in enc and icon:
+        print(f"{icon} {msg}", flush=True)
+    else:
+        print(msg, flush=True)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_name", required=True)
@@ -14,7 +35,7 @@ parser.add_argument("--dataset_path", required=True)
 parser.add_argument("--output_dir", required=True)
 args = parser.parse_args()
 
-print("🔁 Cargando tokenizer...")
+p("Cargando tokenizer...", "🔁")
 tokenizer = AutoTokenizer.from_pretrained(args.model_name, trust_remote_code=True)
 tokenizer.pad_token = tokenizer.eos_token
 tokenizer.padding_side = "right"
@@ -27,10 +48,11 @@ bnb_config = BitsAndBytesConfig(
     bnb_4bit_quant_type="nf4"
 )
 
-model = AutoModelForCausalLM.from_pretrained(
+model = AutoModelForCausalLM.from_pretrained(    
     args.model_name,
     quantization_config=bnb_config,
-    device_map="auto"
+    device_map="auto",
+    use_safetensors=True
 )
 
 print("🎛️ Preparando modelo...")
