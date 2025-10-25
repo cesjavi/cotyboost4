@@ -1,12 +1,16 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import os
+import signal
+
+# Dictionary to track active training subprocesses
+training_processes = {}
+
 from routes.process_project import project_bp
 from routes.train import train_bp
 from routes.metrics import metrics_bp
 from routes.logs import logs_bp
 from routes.inference import inference_bp
-import os
-import signal
 
 app = Flask(__name__)
 CORS(app)
@@ -16,7 +20,6 @@ app.register_blueprint(train_bp)
 app.register_blueprint(metrics_bp)
 app.register_blueprint(inference_bp)
 
-training_processes = {}
 @app.route('/stop_train', methods=['POST'])
 def stop_train():
     project_id = request.json.get("project_id")

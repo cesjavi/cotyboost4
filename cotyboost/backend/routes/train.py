@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, Response, stream_with_context
 import subprocess
 import os
 import time
+from app import training_processes
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 TEMP_ROOT = os.path.join(BASE_DIR, "temp_projects")
@@ -35,7 +36,15 @@ def launch_training():
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
     with open(log_file, "a") as log:
-        subprocess.Popen(command, stdout=log, stderr=log, env=env)
+        process = subprocess.Popen(
+            command,
+            stdout=log,
+            stderr=log,
+            env=env,
+            preexec_fn=os.setsid,
+        )
+
+    training_processes[project_id] = process
 
     return jsonify({"status": "Training started", "log_file": log_file})
 
