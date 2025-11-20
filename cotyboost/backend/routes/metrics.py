@@ -4,9 +4,7 @@ import re
 import subprocess
 import json
 from typing import Optional
-
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-TEMP_ROOT = os.path.join(BASE_DIR, "temp_projects")
+from config import TEMP_ROOT
 
 metrics_bp = Blueprint('metrics', __name__)
 

@@ -4,9 +4,7 @@ import json
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
-
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-TEMP_ROOT = os.path.join(BASE_DIR, "temp_projects")
+from config import TEMP_ROOT
 
 inference_bp = Blueprint('inference', __name__)
 

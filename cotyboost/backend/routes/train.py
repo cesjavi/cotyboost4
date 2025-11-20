@@ -2,9 +2,7 @@ from flask import Blueprint, request, jsonify, Response, stream_with_context
 import subprocess
 import os
 import time
-
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-TEMP_ROOT = os.path.join(BASE_DIR, "temp_projects")
+from config import TEMP_ROOT
 
 train_bp = Blueprint('train', __name__)
 
