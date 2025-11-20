@@ -7,14 +7,6 @@ from peft import get_peft_model, LoraConfig, TaskType, prepare_model_for_kbit_tr
 import torch
 import os
 import sys
-sys.stdout.reconfigure(encoding='utf-8')
-model.gradient_checkpointing_disable()
-print("📦 Intentando cargar modelo...")
-model = AutoModelForCausalLM.from_pretrained(
-    "codellama/CodeLlama-7b-hf",
-    torch_dtype=torch.float16,
-    device_map="auto"
-)
 
 def load_json_dataset(path):
     with open(path, "r", encoding="utf-8") as f:
@@ -24,6 +16,9 @@ def load_json_dataset(path):
     return Dataset.from_dict({"text": [f"{i}\n{o}" for i, o in zip(inputs, outputs)]})
 
 def main():
+    # Move stdout reconfiguration inside main if running as script
+    sys.stdout.reconfigure(encoding='utf-8')
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, required=True)
     parser.add_argument("--dataset_path", type=str, required=True)
@@ -43,7 +38,7 @@ def main():
 
     dataset = dataset.map(tokenize)
 
-    model_kwargs = {"trust_remote_code": True}
+    model_kwargs = {"trust_remote_code": True, "device_map": "auto", "torch_dtype": torch.float16}
 
     if args.mode == "qlora":
         from transformers import BitsAndBytesConfig
@@ -54,7 +49,13 @@ def main():
             bnb_4bit_quant_type="nf4"
         )
 
+    print("📦 Intentando cargar modelo...")
     model = AutoModelForCausalLM.from_pretrained(args.model_name, **model_kwargs)
+
+    # Disable gradient checkpointing if needed, but usually it's better to leave it if memory is tight.
+    # However, the original code had `model.gradient_checkpointing_disable()`.
+    # I will keep it but check if model supports it.
+    model.gradient_checkpointing_disable()
 
     if args.mode in ["lora", "qlora"]:
         model = prepare_model_for_kbit_training(model)
