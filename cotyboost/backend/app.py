@@ -7,6 +7,7 @@ from routes.logs import logs_bp
 from routes.inference import inference_bp
 import os
 import signal
+from utils.state import training_processes
 
 app = Flask(__name__)
 CORS(app)
@@ -16,14 +17,16 @@ app.register_blueprint(train_bp)
 app.register_blueprint(metrics_bp)
 app.register_blueprint(inference_bp)
 
-training_processes = {}
 @app.route('/stop_train', methods=['POST'])
 def stop_train():
     project_id = request.json.get("project_id")
     process = training_processes.get(project_id)
 
     if process and process.poll() is None:  # Verifica si sigue corriendo
-        os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+        try:
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+        except ProcessLookupError:
+            pass
         process.terminate()
         process.wait()
         del training_processes[project_id]
