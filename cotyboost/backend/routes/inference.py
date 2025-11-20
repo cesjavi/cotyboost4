@@ -12,6 +12,12 @@ inference_bp = Blueprint('inference', __name__)
 INFERENCE_SESSIONS = {}
 
 
+def unload_model(project_id):
+    """Unload the model for a project to free up memory."""
+    if project_id in INFERENCE_SESSIONS:
+        del INFERENCE_SESSIONS[project_id]
+        torch.cuda.empty_cache()
+
 @inference_bp.route('/list_projects', methods=['GET'])
 def list_projects():
     """Return available processed projects."""
@@ -35,8 +41,13 @@ def list_projects():
 
 
 def load_inference_model(project_id):
-    """Load and cache tokenizer and model for a project."""
+    """Load and cache tokenizer and model for a project. Unloads previous model."""
     if project_id not in INFERENCE_SESSIONS:
+        # Unload other models to prevent OOM
+        keys_to_remove = list(INFERENCE_SESSIONS.keys())
+        for k in keys_to_remove:
+            unload_model(k)
+
         adapter_path = os.path.join(TEMP_ROOT, project_id, 'adapter')
         analysis_path = os.path.join(TEMP_ROOT, project_id, 'analysis.json')
         model_name = 'Salesforce/codegen-6B-mono'
