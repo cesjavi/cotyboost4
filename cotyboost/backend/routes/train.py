@@ -2,9 +2,9 @@ from flask import Blueprint, request, jsonify, Response, stream_with_context
 import subprocess
 import os
 import time
-
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-TEMP_ROOT = os.path.join(BASE_DIR, "temp_projects")
+from config import TEMP_ROOT
+from utils.state import training_processes
+from utils.security import validate_project_id
 
 train_bp = Blueprint('train', __name__)
 
@@ -17,6 +17,10 @@ def launch_training():
 
     if not all([project_id, model_name, mode]):
         return jsonify({"error": "Missing parameters"}), 400
+
+    project_id = validate_project_id(project_id)
+    if not project_id:
+         return jsonify({"error": "Invalid Project ID"}), 400
 
     dataset_path = os.path.join(TEMP_ROOT, project_id, "dataset.json")
     output_dir = os.path.join(TEMP_ROOT, project_id, "adapter")
@@ -35,7 +39,8 @@ def launch_training():
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
     with open(log_file, "a") as log:
-        subprocess.Popen(command, stdout=log, stderr=log, env=env)
+        process = subprocess.Popen(command, stdout=log, stderr=log, env=env, start_new_session=True)
+        training_processes[project_id] = process
 
     return jsonify({"status": "Training started", "log_file": log_file})
 

@@ -10,9 +10,9 @@ import subprocess
 import re
 import json
 import glob
+from werkzeug.utils import secure_filename
 
 print("Iniciando app...")
-print("GROQ_API_KEY:", os.environ.get("GROQ_API_KEY"))
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMP_ROOT = os.path.join(BASE_DIR, "temp_projects")
@@ -45,7 +45,10 @@ def process_project():
         else:
             return jsonify({'error': 'No se recibió ZIP ni GitHub URL'}), 400
 
-        project_id = project_name
+        if not project_name or not re.match(r'^[a-zA-Z0-9_-]+$', secure_filename(project_name)):
+             return jsonify({'error': 'Invalid Project Name'}), 400
+
+        project_id = secure_filename(project_name)
         extract_path = os.path.join(TEMP_ROOT, project_id)
         os.makedirs(extract_path, exist_ok=True)
 

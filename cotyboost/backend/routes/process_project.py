@@ -5,9 +5,8 @@ import re
 from utils.analyzer import analyze_project
 import json
 import glob
-
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-TEMP_ROOT = os.path.join(BASE_DIR, "temp_projects")
+from config import TEMP_ROOT
+from utils.security import validate_project_id
 
 project_bp = Blueprint('project', __name__)
 
@@ -30,7 +29,11 @@ def process_project():
             project_name = match.group(2).replace(" ", "_")
         else:
             return jsonify({"error": "No se recibió ZIP ni GitHub URL"}), 400
-        project_id = project_name
+
+        project_id = validate_project_id(project_name)
+        if not project_id:
+            return jsonify({"error": "Invalid Project ID"}), 400
+
         extract_path = os.path.join(TEMP_ROOT, project_id)
 
         # Ensure a clean extraction directory
